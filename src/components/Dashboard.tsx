@@ -156,6 +156,11 @@ export function Dashboard() {
   }, []);
 
   useEffect(() => {
+    // restore admin login from localStorage
+    try {
+      const stored = localStorage.getItem('isAdmin');
+      if (stored === 'true') setIsAdmin(true);
+    } catch {}
     fetchSupabase();
   }, [fetchSupabase]);
 
@@ -173,7 +178,7 @@ export function Dashboard() {
   };
 
   const handleSaveEditInline = async (id: string, draft: {
-    aggregateType: string; aggregateQuantity: number; amount: number; paymentType: 'CASH'|'ACCOUNTS_RECEIVABLE'; driverName: string; plateNumber: string; drIsInvNumber: string; hauler: string; loadedBy: string;
+    aggregateType: string; aggregateQuantity: number; amount: number; paymentType: 'CASH'|'ACCOUNTS_RECEIVABLE'; driverName: string; plateNumber: string; drIsInvNumber: string; hauler: string; loadedBy: string; companyName: string;
   }) => {
     try {
       const payload = {
@@ -186,12 +191,34 @@ export function Dashboard() {
         dr_is_inv_number: draft.drIsInvNumber,
         hauler: draft.hauler,
         loaded_by: draft.loadedBy,
+        company_name: draft.companyName,
       };
-      const { error } = await supabase.from('sales_records').update(payload).eq('id', id);
+      const isNumericId = /^\d+$/.test(String(id));
+      const idValue: any = isNumericId ? Number(id) : id;
+      const { error } = await supabase.from('sales_records').update(payload).eq('id', idValue);
       if (error) {
         console.error('Supabase update error', error);
         return;
       }
+      // optimistic local update so UI reflects immediately
+      setAddedRecords(prev => prev.map(r => {
+        if (r.id === id) {
+          return {
+            ...r,
+            aggregateType: draft.aggregateType,
+            aggregateQuantity: draft.aggregateQuantity,
+            amount: draft.amount,
+            paymentType: draft.paymentType,
+            driverName: draft.driverName,
+            plateNumber: draft.plateNumber,
+            drIsInvNumber: draft.drIsInvNumber,
+            hauler: draft.hauler,
+            loadedBy: draft.loadedBy,
+            companyName: draft.companyName,
+          };
+        }
+        return r;
+      }));
       await fetchSupabase();
     } catch (e) {
       console.error('Update exception', e);
@@ -272,7 +299,7 @@ export function Dashboard() {
                 </button>
               ) : (
                 <button
-                  onClick={() => setIsAdmin(false)}
+                  onClick={() => { setIsAdmin(false); try { localStorage.removeItem('isAdmin'); } catch {} }}
                   className="px-4 py-2 rounded-lg font-semibold bg-slate-800/70 text-slate-200 border border-slate-700 hover:bg-slate-700/70 transition"
                 >
                   Log Out
@@ -321,6 +348,7 @@ export function Dashboard() {
                       onClick={() => {
                         if (loginUsername === 'Jasper' && loginPassword === 'Admin123') {
                           setIsAdmin(true);
+                          try { localStorage.setItem('isAdmin', 'true'); } catch {}
                           setLoginError('');
                           setLoginUsername('');
                           setLoginPassword('');

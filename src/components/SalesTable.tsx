@@ -17,6 +17,7 @@ interface SalesTableProps {
     drIsInvNumber: string;
     hauler: string;
     loadedBy: string;
+    companyName: string;
   }) => void;
 }
 
@@ -33,7 +34,9 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
     drIsInvNumber: string;
     hauler: string;
     loadedBy: string;
+    companyName: string;
   }>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const itemsPerPage = 20;
 
   const sortedData = useMemo(() => {
@@ -117,7 +120,31 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
             {currentData.map((record) => (
               <tr key={record.id} className="hover:bg-slate-700/30 transition-colors">
                 <td className="px-4 py-3 text-sm text-slate-300 whitespace-nowrap">{formatDate(record.saleDate)}</td>
-                <td className="px-4 py-3 text-sm font-medium text-white">{record.companyName}</td>
+                <td className="px-4 py-3 text-sm font-medium text-white">
+                  {editingId === record.id ? (
+                    <input
+                      type="text"
+                      className="w-full px-2 py-1 rounded border border-slate-600 bg-slate-800 text-slate-200"
+                      value={draft?.companyName ?? record.companyName}
+                      onChange={(e)=> setDraft(d => ({ ...(d || {
+                        aggregateType: record.aggregateType,
+                        aggregateQuantity: record.aggregateQuantity,
+                        amount: record.amount,
+                        paymentType: record.paymentType,
+                        driverName: record.driverName,
+                        plateNumber: record.plateNumber,
+                        drIsInvNumber: record.drIsInvNumber,
+                        hauler: record.hauler,
+                        loadedBy: record.loadedBy,
+                        companyName: record.companyName,
+                      }), companyName: e.target.value }))}
+                      title="Company Name"
+                      placeholder="Enter company name"
+                    />
+                  ) : (
+                    record.companyName
+                  )}
+                </td>
                 {types.map((t, idx) => {
                   const isEditing = editingId === record.id;
                   const isSelectedType = (draft?.aggregateType ?? record.aggregateType).toUpperCase() === t.toUpperCase();
@@ -138,6 +165,7 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
                               drIsInvNumber: record.drIsInvNumber,
                               hauler: record.hauler,
                               loadedBy: record.loadedBy,
+                              companyName: record.companyName,
                             }), aggregateType: e.target.value }))}
                             title="Aggregate Type"
                           >
@@ -159,6 +187,7 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
                                 drIsInvNumber: record.drIsInvNumber,
                                 hauler: record.hauler,
                                 loadedBy: record.loadedBy,
+                                companyName: record.companyName,
                               }), aggregateQuantity: Number(e.target.value) }))}
                               title="Quantity (m³)"
                               placeholder="Enter quantity"
@@ -187,6 +216,7 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
                         drIsInvNumber: record.drIsInvNumber,
                         hauler: record.hauler,
                         loadedBy: record.loadedBy,
+                        companyName: record.companyName,
                       }), driverName: e.target.value }))}
                       title="Driver"
                       placeholder="Enter driver name"
@@ -209,6 +239,7 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
                         drIsInvNumber: record.drIsInvNumber,
                         hauler: record.hauler,
                         loadedBy: record.loadedBy,
+                        companyName: record.companyName,
                       }), plateNumber: e.target.value }))}
                       title="Plate Number"
                       placeholder="Enter plate number"
@@ -232,6 +263,7 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
                           drIsInvNumber: record.drIsInvNumber,
                           hauler: record.hauler,
                           loadedBy: record.loadedBy,
+                          companyName: record.companyName,
                         });
                         setDraft({ ...base, drIsInvNumber: e.target.value });
                       }}
@@ -255,6 +287,7 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
                         drIsInvNumber: record.drIsInvNumber,
                         hauler: record.hauler,
                         loadedBy: record.loadedBy,
+                        companyName: record.companyName,
                       }), paymentType: e.target.value as 'CASH'|'ACCOUNTS_RECEIVABLE' }))}
                       title="Payment Type"
                     >
@@ -290,6 +323,7 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
                         drIsInvNumber: record.drIsInvNumber,
                         hauler: record.hauler,
                         loadedBy: record.loadedBy,
+                        companyName: record.companyName,
                       }), amount: Number(e.target.value) }))}
                       title="Amount"
                       placeholder="Enter amount"
@@ -337,6 +371,7 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
                               drIsInvNumber: record.drIsInvNumber,
                               hauler: record.hauler,
                               loadedBy: record.loadedBy,
+                              companyName: record.companyName,
                             });
                             onEdit && onEdit(record);
                           }}
@@ -346,7 +381,9 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
                           Edit
                         </button>
                         <button
-                          onClick={() => onDelete && onDelete(record)}
+                          onClick={() => {
+                            setConfirmDeleteId(record.id);
+                          }}
                           className="px-3 py-1 rounded-md border border-pink-600/50 bg-pink-600/20 text-pink-200 hover:bg-pink-600/30"
                           title="Delete"
                         >
@@ -374,6 +411,33 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
           </tfoot>
         </table>
       </div>
+
+      {confirmDeleteId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70">
+          <div className="w-full max-w-sm rounded-2xl border border-pink-500/30 bg-gradient-to-br from-slate-900 to-slate-800 p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-white mb-2">Confirm Deletion</h3>
+            <p className="text-slate-300 mb-6">This action will permanently delete the selected record. Continue?</p>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={() => setConfirmDeleteId(null)}
+                className="px-4 py-2 rounded-lg bg-slate-700/80 text-slate-200 border border-slate-600 hover:bg-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  const rec = data.find(r => r.id === confirmDeleteId);
+                  if (rec && onDelete) onDelete(rec);
+                  setConfirmDeleteId(null);
+                }}
+                className="px-4 py-2 rounded-lg font-semibold bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow hover:opacity-95"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {totalPages > 1 && (
         <div className="px-6 py-4 border-t border-cyan-500/20 flex items-center justify-between">
