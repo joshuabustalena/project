@@ -20,6 +20,7 @@ export function Dashboard() {
   const [addedRecords, setAddedRecords] = useState<SalesRecord[]>([]);
   const [formError, setFormError] = useState<string>('');
   const [formSubmitting, setFormSubmitting] = useState<boolean>(false);
+  // inline editing handled inside SalesTable; no modal state here
   const [newRecord, setNewRecord] = useState<{
     saleDate: string;
     companyName: string;
@@ -126,36 +127,76 @@ export function Dashboard() {
     ]
   );
 
+  const fetchSupabase = useMemo(() => async () => {
+    const { data, error } = await supabase
+      .from('sales_records')
+      .select('*');
+    if (error) {
+      console.error('Supabase fetch error', error);
+      return;
+    }
+    if (data && Array.isArray(data)) {
+      const mapped: SalesRecord[] = data.map((r: any) => ({
+        id: r.id?.toString?.() ?? `${r.id}`,
+        saleDate: r.saleDate ? new Date(r.saleDate) : new Date(r.sale_date ?? Date.now()),
+        companyName: r.companyName ?? r.company_name ?? '',
+        aggregateType: r.aggregateType ?? r.aggregate_type ?? '',
+        aggregateQuantity: Number(r.aggregateQuantity ?? r.aggregate_quantity ?? 0),
+        driverName: r.driverName ?? r.driver_name ?? '',
+        plateNumber: r.plateNumber ?? r.plate_number ?? '',
+        hauler: r.hauler ?? '',
+        cashPoNumber: r.cashPoNumber ?? r.cash_po_number ?? '',
+        drIsInvNumber: r.drIsInvNumber ?? r.dr_is_inv_number ?? '',
+        loadedBy: r.loadedBy ?? r.loaded_by ?? '',
+        amount: Number(r.amount ?? 0),
+        paymentType: (r.paymentType ?? r.payment_type ?? 'CASH') as 'CASH' | 'ACCOUNTS_RECEIVABLE',
+      }));
+      setAddedRecords(mapped);
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchSupabase = async () => {
-      const { data, error } = await supabase
-        .from('sales_records')
-        .select('*');
+    fetchSupabase();
+  }, [fetchSupabase]);
+
+  const handleDeleteRecord = async (record: SalesRecord) => {
+    try {
+      const { error } = await supabase.from('sales_records').delete().eq('id', record.id);
       if (error) {
-        console.error('Supabase fetch error', error);
+        console.error('Supabase delete error', error);
         return;
       }
-      if (data && Array.isArray(data)) {
-        const mapped: SalesRecord[] = data.map((r: any) => ({
-          id: r.id?.toString?.() ?? `${r.id}`,
-          saleDate: r.saleDate ? new Date(r.saleDate) : new Date(r.sale_date ?? Date.now()),
-          companyName: r.companyName ?? r.company_name ?? '',
-          aggregateType: r.aggregateType ?? r.aggregate_type ?? '',
-          aggregateQuantity: Number(r.aggregateQuantity ?? r.aggregate_quantity ?? 0),
-          driverName: r.driverName ?? r.driver_name ?? '',
-          plateNumber: r.plateNumber ?? r.plate_number ?? '',
-          hauler: r.hauler ?? '',
-          cashPoNumber: r.cashPoNumber ?? r.cash_po_number ?? '',
-          drIsInvNumber: r.drIsInvNumber ?? r.dr_is_inv_number ?? '',
-          loadedBy: r.loadedBy ?? r.loaded_by ?? '',
-          amount: Number(r.amount ?? 0),
-          paymentType: (r.paymentType ?? r.payment_type ?? 'CASH') as 'CASH' | 'ACCOUNTS_RECEIVABLE',
-        }));
-        setAddedRecords(mapped);
+      setAddedRecords(prev => prev.filter(r => r.id !== record.id));
+    } catch (e) {
+      console.error('Delete exception', e);
+    }
+  };
+
+  const handleSaveEditInline = async (id: string, draft: {
+    aggregateType: string; aggregateQuantity: number; amount: number; paymentType: 'CASH'|'ACCOUNTS_RECEIVABLE'; driverName: string; plateNumber: string; drIsInvNumber: string; hauler: string; loadedBy: string;
+  }) => {
+    try {
+      const payload = {
+        aggregate_type: draft.aggregateType,
+        aggregate_quantity: draft.aggregateQuantity,
+        amount: draft.amount,
+        payment_type: draft.paymentType,
+        driver_name: draft.driverName,
+        plate_number: draft.plateNumber,
+        dr_is_inv_number: draft.drIsInvNumber,
+        hauler: draft.hauler,
+        loaded_by: draft.loadedBy,
+      };
+      const { error } = await supabase.from('sales_records').update(payload).eq('id', id);
+      if (error) {
+        console.error('Supabase update error', error);
+        return;
       }
-    };
-    fetchSupabase();
-  }, []);
+      await fetchSupabase();
+    } catch (e) {
+      console.error('Update exception', e);
+    }
+  };
 
   const getPeriodLabel = () => {
     const date = timePeriod === 'today' ? new Date() : new Date(selectedDate);
@@ -237,6 +278,8 @@ export function Dashboard() {
                   Log Out
                 </button>
               )}
+
+    {/* Inline editing only; modal removed as requested */}
             </div>
           </div>
 
@@ -403,7 +446,13 @@ export function Dashboard() {
         {activeTab === 'reports' && (
           <div className="space-y-8">
             <SalesMetrics data={filteredData} />
-            <SalesTable data={filteredData} period={getPeriodLabel()} />
+            <SalesTable
+              data={filteredData}
+              period={getPeriodLabel()}
+              isAdmin={isAdmin}
+              onDelete={handleDeleteRecord}
+              onSaveEdit={handleSaveEditInline}
+            />
           </div>
         )}
 
@@ -519,7 +568,7 @@ export function Dashboard() {
                       <input id="te-qty" type="number" value={newRecord.threeEightQty} onChange={(e)=>setNewRecord({ ...newRecord, threeEightQty: Number(e.target.value) })} className="w-full px-3 py-2 rounded-lg bg-slate-900/60 border border-slate-700 text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent" />
                     </div>
                     <div>
-                      <label htmlFor="waste-qty" className="block text-xs text-cyan-300 mb-1">WASTE</label>
+                      <label htmlFor="waste-qty" className="block text-xs text-cyan-300 mb-1">Mix</label>
                       <input id="waste-qty" type="number" value={newRecord.wasteQty} onChange={(e)=>setNewRecord({ ...newRecord, wasteQty: Number(e.target.value) })} className="w-full px-3 py-2 rounded-lg bg-slate-900/60 border border-slate-700 text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent" />
                     </div>
                   </div>
@@ -599,7 +648,7 @@ export function Dashboard() {
                     pushIf('G-1', newRecord.g1Qty);
                     pushIf('3/4', newRecord.threeFourthQty);
                     pushIf('3/8', newRecord.threeEightQty);
-                    pushIf('WASTE', newRecord.wasteQty);
+                    pushIf('Mix', newRecord.wasteQty);
 
                     if (toAdd.length === 0) return;
                     setAddedRecords(prev => [...prev, ...toAdd]);

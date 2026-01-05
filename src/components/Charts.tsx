@@ -117,12 +117,16 @@ export function AggregateDistribution({ data }: ChartsProps) {
             cx="50%"
             cy="50%"
             labelLine={false}
-            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+            label={(props: any) => {
+              const { name, percent } = (props || {}) as { name?: string; percent?: number };
+              const pct = typeof percent === 'number' ? (percent * 100).toFixed(0) : '0';
+              return `${name ?? ''} ${pct}%`;
+            }}
             outerRadius={120}
             fill="#8884d8"
             dataKey="value"
           >
-            {aggregateData.map((entry, index) => (
+            {aggregateData.map((_, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
