@@ -178,7 +178,7 @@ export function Dashboard() {
   };
 
   const handleSaveEditInline = async (id: string, draft: {
-    aggregateType: string; aggregateQuantity: number; amount: number; paymentType: 'CASH'|'ACCOUNTS_RECEIVABLE'; driverName: string; plateNumber: string; drIsInvNumber: string; hauler: string; loadedBy: string; companyName: string;
+    aggregateType: string; aggregateQuantity: number; amount: number; paymentType: 'CASH'|'ACCOUNTS_RECEIVABLE'; driverName: string; plateNumber: string; drIsInvNumber: string; hauler: string; loadedBy: string; companyName: string; cashPoNumber: string;
   }) => {
     try {
       const payload = {
@@ -191,6 +191,7 @@ export function Dashboard() {
         dr_is_inv_number: draft.drIsInvNumber,
         hauler: draft.hauler,
         loaded_by: draft.loadedBy,
+        cash_po_number: draft.cashPoNumber,
         company_name: draft.companyName,
       };
       const isNumericId = /^\d+$/.test(String(id));
@@ -214,6 +215,7 @@ export function Dashboard() {
             drIsInvNumber: draft.drIsInvNumber,
             hauler: draft.hauler,
             loadedBy: draft.loadedBy,
+            cashPoNumber: draft.cashPoNumber,
             companyName: draft.companyName,
           };
         }

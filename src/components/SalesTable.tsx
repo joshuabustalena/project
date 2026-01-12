@@ -18,6 +18,7 @@ interface SalesTableProps {
     hauler: string;
     loadedBy: string;
     companyName: string;
+    cashPoNumber: string;
   }) => void;
 }
 
@@ -35,6 +36,7 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
     hauler: string;
     loadedBy: string;
     companyName: string;
+    cashPoNumber: string;
   }>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const itemsPerPage = 20;
@@ -109,6 +111,8 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
               <th className="px-4 py-3 text-left text-xs font-semibold text-cyan-400 uppercase tracking-wider">Driver</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-cyan-400 uppercase tracking-wider">Plate No.</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-cyan-400 uppercase tracking-wider">DR/IS/INV #</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-cyan-400 uppercase tracking-wider">CASH / P.O #</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-cyan-400 uppercase tracking-wider">Loaded By</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-cyan-400 uppercase tracking-wider">Payment Type</th>
               <th className="px-4 py-3 text-right text-xs font-semibold text-cyan-400 uppercase tracking-wider">Amount</th>
               {isAdmin && (
@@ -137,6 +141,7 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
                         hauler: record.hauler,
                         loadedBy: record.loadedBy,
                         companyName: record.companyName,
+                        cashPoNumber: record.cashPoNumber,
                       }), companyName: e.target.value }))}
                       title="Company Name"
                       placeholder="Enter company name"
@@ -166,6 +171,7 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
                               hauler: record.hauler,
                               loadedBy: record.loadedBy,
                               companyName: record.companyName,
+                              cashPoNumber: record.cashPoNumber,
                             }), aggregateType: e.target.value }))}
                             title="Aggregate Type"
                           >
@@ -188,6 +194,7 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
                                 hauler: record.hauler,
                                 loadedBy: record.loadedBy,
                                 companyName: record.companyName,
+                                cashPoNumber: record.cashPoNumber,
                               }), aggregateQuantity: Number(e.target.value) }))}
                               title="Quantity (m³)"
                               placeholder="Enter quantity"
@@ -217,6 +224,7 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
                         hauler: record.hauler,
                         loadedBy: record.loadedBy,
                         companyName: record.companyName,
+                        cashPoNumber: record.cashPoNumber,
                       }), driverName: e.target.value }))}
                       title="Driver"
                       placeholder="Enter driver name"
@@ -240,6 +248,7 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
                         hauler: record.hauler,
                         loadedBy: record.loadedBy,
                         companyName: record.companyName,
+                        cashPoNumber: record.cashPoNumber,
                       }), plateNumber: e.target.value }))}
                       title="Plate Number"
                       placeholder="Enter plate number"
@@ -264,6 +273,7 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
                           hauler: record.hauler,
                           loadedBy: record.loadedBy,
                           companyName: record.companyName,
+                          cashPoNumber: record.cashPoNumber,
                         });
                         setDraft({ ...base, drIsInvNumber: e.target.value });
                       }}
@@ -271,6 +281,54 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
                       placeholder="Enter DR / IS / INV number"
                     />
                   ) : record.drIsInvNumber}
+                </td>
+                <td className="px-4 py-3 text-sm text-slate-300">
+                  {editingId === record.id ? (
+                    <input
+                      type="text"
+                      className="w-full px-2 py-1 rounded border border-slate-600 bg-slate-800 text-slate-200"
+                      value={draft?.cashPoNumber ?? record.cashPoNumber}
+                      onChange={(e)=> setDraft(d => ({ ...(d || {
+                        aggregateType: record.aggregateType,
+                        aggregateQuantity: record.aggregateQuantity,
+                        amount: record.amount,
+                        paymentType: record.paymentType,
+                        driverName: record.driverName,
+                        plateNumber: record.plateNumber,
+                        drIsInvNumber: record.drIsInvNumber,
+                        hauler: record.hauler,
+                        loadedBy: record.loadedBy,
+                        companyName: record.companyName,
+                        cashPoNumber: record.cashPoNumber,
+                      }), cashPoNumber: e.target.value }))}
+                      title="CASH / P.O Number"
+                      placeholder="Cash / PO Number"
+                    />
+                  ) : record.cashPoNumber}
+                </td>
+                <td className="px-4 py-3 text-sm text-slate-300">
+                  {editingId === record.id ? (
+                    <input
+                      type="text"
+                      className="w-full px-2 py-1 rounded border border-slate-600 bg-slate-800 text-slate-200"
+                      value={draft?.loadedBy ?? record.loadedBy}
+                      onChange={(e)=> setDraft(d => ({ ...(d || {
+                        aggregateType: record.aggregateType,
+                        aggregateQuantity: record.aggregateQuantity,
+                        amount: record.amount,
+                        paymentType: record.paymentType,
+                        driverName: record.driverName,
+                        plateNumber: record.plateNumber,
+                        drIsInvNumber: record.drIsInvNumber,
+                        hauler: record.hauler,
+                        loadedBy: record.loadedBy,
+                        companyName: record.companyName,
+                        cashPoNumber: record.cashPoNumber,
+                      }), loadedBy: e.target.value }))}
+                      title="Loaded By"
+                      placeholder="Loaded By"
+                    />
+                  ) : record.loadedBy}
                 </td>
                 <td className="px-4 py-3 text-sm">
                   {editingId === record.id ? (
@@ -288,6 +346,7 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
                         hauler: record.hauler,
                         loadedBy: record.loadedBy,
                         companyName: record.companyName,
+                        cashPoNumber: record.cashPoNumber,
                       }), paymentType: e.target.value as 'CASH'|'ACCOUNTS_RECEIVABLE' }))}
                       title="Payment Type"
                     >
@@ -324,6 +383,7 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
                         hauler: record.hauler,
                         loadedBy: record.loadedBy,
                         companyName: record.companyName,
+                        cashPoNumber: record.cashPoNumber,
                       }), amount: Number(e.target.value) }))}
                       title="Amount"
                       placeholder="Enter amount"
@@ -372,6 +432,7 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
                               hauler: record.hauler,
                               loadedBy: record.loadedBy,
                               companyName: record.companyName,
+                              cashPoNumber: record.cashPoNumber,
                             });
                             onEdit && onEdit(record);
                           }}
@@ -404,7 +465,7 @@ export function SalesTable({ data, period, isAdmin = false, onEdit, onDelete, on
                   {qtyTotals[t] ? `${qtyTotals[t]}m³` : '0m³'}
                 </td>
               ))}
-              <td className="px-4 py-4" colSpan={4}></td>
+              <td className="px-4 py-4" colSpan={6}></td>
               <td className="px-4 py-4 text-right text-lg font-bold text-emerald-400">{formatCurrency(totalAmount)}</td>
               {isAdmin && <td className="px-4 py-4"></td>}
             </tr>
